@@ -5634,7 +5634,7 @@
       this.chart_connections.title = "Connections";
       this.chart_connections.type_names = ["peer", "peer_onion", "connection", "connection_onion", "connection_in", "connection_ping_avg", "connection_ping_min"];
       this.chart_connections.formatValue = function(type_data) {
-        return type_data.connection + " of " + type_data.peer + " peers";
+        return "" + type_data.connection + " of " + type_data.peer + " peers";
       };
       this.chart_connections.formatDetails = function(type_data) {
         var back;
