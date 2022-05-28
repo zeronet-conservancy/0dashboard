@@ -1,0 +1,14 @@
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 2 of the License; contributions
+after git commit 946afcaf9d57ad5eeda140aeab3420360a5c1350 (or made
+after 2022-05-28) can also be used under the terms of version 3 or
+(at your option) any later version of the License.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
