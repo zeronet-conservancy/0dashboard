@@ -1144,8 +1144,7 @@
   var PageFiles,
     bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    hasProp = {}.hasOwnProperty,
-    indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+    hasProp = {}.hasOwnProperty;
 
   PageFiles = (function(superClass) {
     extend(PageFiles, superClass);
@@ -1311,42 +1310,28 @@
     };
 
     PageFiles.prototype.handleSelectbarDelete = function() {
-      var bigfiles_modified_sites, i, j, k, len, len1, len2, ref, ref1, ref2, selected_site_file, selected_site_files, site, site_file;
-      bigfiles_modified_sites = [];
+      var i, inner_path, inner_paths, j, len, len1, ref, site, site_file;
       ref = this.getSites();
       for (i = 0, len = ref.length; i < len; i++) {
         site = ref[i];
-        selected_site_files = (function() {
+        inner_paths = (function() {
           var j, len1, ref1, results;
           ref1 = site.files.items;
           results = [];
           for (j = 0, len1 = ref1.length; j < len1; j++) {
             site_file = ref1[j];
             if (site.files.selected[site_file.inner_path]) {
-              results.push(site_file);
+              results.push(site_file.inner_path);
             }
           }
           return results;
         })();
-        if (selected_site_files.length > 0) {
-          for (j = 0, len1 = selected_site_files.length; j < len1; j++) {
-            selected_site_file = selected_site_files[j];
-            Page.cmd("optionalFileDelete", [selected_site_file.inner_path, site.row.address]);
-            if (site.files.mode === "bigfiles") {
-              Page.cmd("optionalFileDelete", [selected_site_file.inner_path + ".piecemap.msgpack", site.row.address]);
-              bigfiles_modified_sites.push(site.row.address);
-            }
+        if (inner_paths.length > 0) {
+          for (j = 0, len1 = inner_paths.length; j < len1; j++) {
+            inner_path = inner_paths[j];
+            Page.cmd("optionalFileDelete", [inner_path, site.row.address]);
           }
           site.files.update();
-        }
-      }
-      if (bigfiles_modified_sites) {
-        ref1 = Page.site_list.sites;
-        for (k = 0, len2 = ref1.length; k < len2; k++) {
-          site = ref1[k];
-          if (ref2 = site.row.address, indexOf.call(bigfiles_modified_sites, ref2) >= 0) {
-            site.files.update();
-          }
         }
       }
       Page.site_list.update();
@@ -1640,17 +1625,15 @@
         })(this)), 1000);
       }
       return h("div#PageFiles", [
-        this.renderSelectbar(), this.renderTotalbar(), this.renderFilter(), this.result.filter_inner_path ? this.result.render() : [
-          this.bigfiles.render(), sites_favorited.slice(0, +this.display_limit + 1 || 9e9).map((function(_this) {
-            return function(site) {
-              return site.renderOptionalStats();
-            };
-          })(this)), sites_connected.slice(0, +this.display_limit + 1 || 9e9).map((function(_this) {
-            return function(site) {
-              return site.renderOptionalStats();
-            };
-          })(this))
-        ]
+        this.renderSelectbar(), this.renderTotalbar(), this.renderFilter(), this.result.filter_inner_path ? this.result.render() : (this.bigfiles.render(), sites_favorited.slice(0, +this.display_limit + 1 || 9e9).map((function(_this) {
+          return function(site) {
+            return site.renderOptionalStats();
+          };
+        })(this)), sites_connected.slice(0, +this.display_limit + 1 || 9e9).map((function(_this) {
+          return function(site) {
+            return site.renderOptionalStats();
+          };
+        })(this)))
       ]);
     };
 
@@ -1695,11 +1678,8 @@
       this.site = site1;
       this.update = bind(this.update, this);
       this.render = bind(this.render, this);
-      this.isSelectedAll = bind(this.isSelectedAll, this);
       this.renderOrderRight = bind(this.renderOrderRight, this);
       this.renderOrder = bind(this.renderOrder, this);
-      this.handleSelectAllClick = bind(this.handleSelectAllClick, this);
-      this.selectAll = bind(this.selectAll, this);
       this.handleMoreClick = bind(this.handleMoreClick, this);
       this.handleOrderbyClick = bind(this.handleOrderbyClick, this);
       this.handleRowMouseenter = bind(this.handleRowMouseenter, this);
@@ -1729,7 +1709,6 @@
           sites[name] = {
             row: file.site.row,
             files: {
-              mode: this.mode,
               items: [],
               selected: this.selected,
               update: this.update
@@ -1794,42 +1773,13 @@
       }
       this.orderby = orderby;
       this.update();
+      Page.projector.scheduleRender();
       return false;
     };
 
     SiteFiles.prototype.handleMoreClick = function() {
       this.limit += 15;
       this.update();
-      return false;
-    };
-
-    SiteFiles.prototype.selectAll = function() {
-      var i, is_selected_all, item, len, ref;
-      is_selected_all = this.isSelectedAll();
-      ref = this.items;
-      for (i = 0, len = ref.length; i < len; i++) {
-        item = ref[i];
-        if (is_selected_all) {
-          delete this.selected[item.inner_path];
-        } else {
-          this.selected[item.inner_path] = true;
-        }
-      }
-      Page.projector.scheduleRender();
-      return Page.page_files.checkSelectedFiles();
-    };
-
-    SiteFiles.prototype.handleSelectAllClick = function() {
-      if (this.has_more) {
-        this.limit = 1000;
-        this.update((function(_this) {
-          return function() {
-            return _this.selectAll();
-          };
-        })(this));
-      } else {
-        this.selectAll();
-      }
       return false;
     };
 
@@ -1857,10 +1807,6 @@
       }, [h("div.icon.icon-arrow-down"), title]);
     };
 
-    SiteFiles.prototype.isSelectedAll = function() {
-      return !this.has_more && Object.keys(this.selected).length === this.items.length;
-    };
-
     SiteFiles.prototype.render = function() {
       var ref;
       if (!((ref = this.items) != null ? ref.length : void 0)) {
@@ -1870,15 +1816,7 @@
         h("div.files.files-" + this.mode, {
           exitAnimation: Animation.slideUpInout
         }, [
-          h("div.tr.thead", [
-            h("div.td.pre", h("a.checkbox-outer", {
-              href: "#Select+all",
-              onclick: this.handleSelectAllClick,
-              classes: {
-                selected: this.isSelectedAll()
-              }
-            }, h("span.checkbox"))), this.mode === "bigfiles" || this.mode === "result" ? h("div.td.site", this.renderOrder("Site", "address")) : void 0, h("div.td.inner_path", this.renderOrder("Optional file", "is_pinned DESC, inner_path")), this.mode === "bigfiles" ? h("div.td.status", "Status") : void 0, h("div.td.size", this.renderOrderRight("Size", "size")), h("div.td.peer", this.renderOrder("Peers", "peer")), h("div.td.uploaded", this.renderOrder("Uploaded", "uploaded")), h("div.td.added", this.renderOrder("Finished", "time_downloaded"))
-          ]), h("div.tbody", this.items.map((function(_this) {
+          h("div.tr.thead", [h("div.td.pre", "."), this.mode === "bigfiles" || this.mode === "result" ? h("div.td.site", this.renderOrder("Site", "address")) : void 0, h("div.td.inner_path", this.renderOrder("Optional file", "is_pinned DESC, inner_path")), this.mode === "bigfiles" ? h("div.td.status", "Status") : void 0, h("div.td.size", this.renderOrderRight("Size", "size")), h("div.td.peer", this.renderOrder("Peers", "peer")), h("div.td.uploaded", this.renderOrder("Uploaded", "uploaded")), h("div.td.added", this.renderOrder("Finished", "time_downloaded"))]), h("div.tbody", this.items.map((function(_this) {
             return function(file) {
               var classes, percent, percent_bg, percent_title, profile_color, site, status;
               site = file.site || _this.site;
@@ -2027,6 +1965,7 @@
       this.menu_warnings = new Menu();
       this.port_checking = false;
       this.has_web_gl = null;
+      Page.cmd('wrapperPermissionAdd', 'ADMIN')
     }
 
     Dashboard.prototype.isTorAlways = function() {
@@ -2238,7 +2177,7 @@
         status = stat.status.capitalize();
         if (status === "Announced" && stat.time_request && stat.time_status) {
           request_taken = stat.time_status - stat.time_request;
-          status = (request_taken.toFixed(2)) + "s";
+          status += " in " + (request_taken.toFixed(2)) + "s";
         }
         title_text = "Requests: " + stat.num_request;
         if (stat.last_error) {
@@ -2280,17 +2219,14 @@
       return false;
     };
 
-    Dashboard.prototype.getWarnings = function(add_server_errors) {
+    Dashboard.prototype.getWarnings = function() {
       var warnings;
-      if (add_server_errors == null) {
-        add_server_errors = true;
-      }
       warnings = [];
       if (navigator.userAgent.match(/(\b(MS)?IE\s+|Trident\/7.0)/)) {
         warnings.push({
           title: "Unsupported browser",
           href: "http://browsehappy.com/",
-          descr: "Internet Explorer is not fully supported browser by ZeroNet, please consider switching to Chrome or Firefox"
+          descr: "Internet Explorer is not fully supported browser by ZeroNet, please consider switching to Firefox, Chromium or other compatible browser"
         });
       }
       if (this.isTorAlways() && (!navigator.userAgent.match(/(Firefox)/) || (navigator.maxTouchPoints != null) || (navigator.serviceWorker != null))) {
@@ -2314,30 +2250,28 @@
           descr: "Looks like your system time is out of sync. Other users may not see your posted content and other problems could happen."
         });
       }
-      if (add_server_errors) {
-        if (Page.server_errors.length > 2) {
-          warnings = warnings.concat(Page.server_errors.slice(-2).reverse());
-          warnings.push({
-            title: (Page.server_errors.length - 2) + " more errors...",
-            href: "#ZeroNet:Console:Error"
-          });
-        } else {
-          warnings = warnings.concat(Page.server_errors);
-        }
+      if (Page.server_errors.length > 2) {
+        warnings = warnings.concat(Page.server_errors.slice(-2).reverse());
+        warnings.push({
+          title: (Page.server_errors.length - 2) + " more errors...",
+          href: "#ZeroNet:Console"
+        });
+      } else {
+        warnings = warnings.concat(Page.server_errors);
       }
       return warnings;
     };
 
     Dashboard.prototype.render = function() {
-      var num_warnings, tor_title;
+      var tor_title, warnings;
       if (Page.server_info) {
         tor_title = this.getTorTitle();
-        num_warnings = this.getWarnings(false) + Page.server_errors.length;
-        return h("div#Dashboard", num_warnings > 0 ? h("a.warnings.dashboard-item", {
+        warnings = this.getWarnings();
+        return h("div#Dashboard", warnings.length ? h("a.warnings.dashboard-item", {
           href: "#Warnings",
           onmousedown: this.handleWarningsClick,
           onclick: Page.returnFalse
-        }, "Warnings: " + num_warnings + "") : void 0, this.menu_warnings.render(".menu-warnings"), parseFloat(Page.server_info.version.replace(/\./g, "0")) < parseFloat(Page.latest_version.replace(/\./g, "0")) ? h("a.newversion.dashboard-item", {
+        }, "Warnings: " + warnings.length) : void 0, this.menu_warnings.render(".menu-warnings"), parseFloat(Page.server_info.version.replace(/\./g, "0")) < parseFloat(Page.latest_version.replace(/\./g, "0")) ? h("a.newversion.dashboard-item", {
           href: "#Update",
           onmousedown: this.handleNewversionClick,
           onclick: Page.returnFalse
@@ -2858,22 +2792,20 @@
 
     FeedList.prototype.renderWelcome = function() {
       return h("div.welcome", [
-        h("img", {
-          src: "img/logo.svg",
-          height: 150,
-          onerror: "this.src='img/logo.png'; this.onerror=null;"
-        }), h("h1", "Welcome to ZeroNet"), h("h2", "Let's build a decentralized Internet together!"), h("div.served", ["This site currently served by ", h("b.peers", Page.site_info["peers"] || "n/a"), " peers, without any central server."]), h("div.sites", [
-          h("h3", "Some sites we created:"), h("a.site.site-zerotalk", {
-            href: Text.getSiteUrl("Talk.ZeroNetwork.bit")
-          }, [h("div.title", ["ZeroTalk"]), h("div.description", ["Reddit-like, decentralized forum"]), h("div.visit", ["Activate \u2501"])]), h("a.site.site-zeroblog", {
-            href: Text.getSiteUrl("Blog.ZeroNetwork.bit")
-          }, [h("div.title", ["ZeroBlog"]), h("div.description", ["Microblogging platform"]), h("div.visit", ["Activate \u2501"])]), h("a.site.site-zeromail", {
-            href: Text.getSiteUrl("Mail.ZeroNetwork.bit")
-          }, [h("div.title", ["ZeroMail"]), h("div.description", ["End-to-end encrypted mailing"]), h("div.visit", ["Activate \u2501"])]), h("a.site.site-zerome", {
-            href: Text.getSiteUrl("Me.ZeroNetwork.bit")
-          }, [h("div.title", ["ZeroMe"]), h("div.description", ["P2P social network"]), h("div.visit", ["Activate \u2501"])]), h("a.site.site-zerosites", {
-            href: Text.getSiteUrl("Sites.ZeroNetwork.bit")
-          }, [h("div.title", ["ZeroSites"]), h("div.description", ["Discover more sites"]), h("div.visit", ["Activate \u2501"])])
+        h("h1", "Welcome to 0net"), h("h2", "we use zeronet-conservancy client"), h("h2", "Let's build & preserve a decentralized Internet together!"), h("div.served", ["This site currently served by ", h("b.peers", Page.site_info["peers"] || "n/a"), " peers, without any central server."]), h("div.sites", [
+            h("h3", "Some sites we created:"),
+
+	    h("a.site.site-zerome", {
+		href: Text.getSiteUrl("1MeFqFfFFGQfa1J3gJyYYUvb5Lksczq7nH")
+            }, [h("div.title", ["ZeroMe"]), h("div.description", ["P2P microblogging social network"]), h("div.visit", ["Activate \u2501"])]),
+
+	    h("a.site.site-zerotalk", {
+		href: Text.getSiteUrl("1TaLkFrMwvbNsooF4ioKAY9EuxTBTjipT")
+            }, [h("div.title", ["ZeroTalk"]), h("div.description", ["An old general discussion forum"]), h("div.visit", ["Activate \u2501"])]),
+	    
+            h("a.site.site-searchindex", {
+		href: Text.getSiteUrl("1xiwbXaTbo9XU32hEpW4NyjZHrugSFdo6")
+	    }, [h("div.title", ["Search and index sites"]), h("div.description", ["Another site discovery and search service"]), h("div.visit", ["Activate \u2501"])])
         ])
       ]);
     };
@@ -2930,17 +2862,13 @@
               enterAnimation: Animation.show,
               exitAnimation: Animation.slideUpInout
             }, [
-              h("a.hide", {
+              "You are serving a blocked site: ", h("a.site", {
+                href: siteblock.site.getHref()
+              }, siteblock.site.row.content.title), h("span.reason", [h("b", "Reason: "), siteblock.reason]), h("a.hide", {
                 href: "#Hide",
                 onclick: _this.handleNotificationHideClick,
                 address: siteblock.address
-              }, "\u00D7"), "You are serving a blocked site: ", h("a.site", {
-                href: siteblock.site.getHref()
-              }, siteblock.site.row.content.title || siteblock.site.row.address_short), h("span.reason", [
-                h("a.title", {
-                  href: siteblock.include.site.getHref()
-                }, "Reason"), ": ", siteblock.reason
-              ])
+              }, "\u00D7")
             ]);
           };
         })(this))
@@ -3138,15 +3066,14 @@
     };
 
     MuteList.prototype.updateFilterIncludes = function() {
-      return Page.cmd("filterIncludeList", {
+      return Page.cmd("FilterIncludeList", {
         all_sites: true,
         filters: true
       }, (function(_this) {
         return function(res) {
-          var address, address_hash, auth_address, i, include, j, len, len1, mute, mutes, ref, ref1, ref2, site, siteblock, siteblocks;
+          var address, auth_address, i, include, len, mute, mutes, ref, ref1, siteblock, siteblocks;
           _this.siteblocks_serving = [];
           _this.includes = [];
-          _this.siteblocks = {};
           for (i = 0, len = res.length; i < len; i++) {
             include = res[i];
             include.site = Page.site_list.sites_byaddress[include.address];
@@ -3166,9 +3093,11 @@
               for (address in ref1) {
                 siteblock = ref1[address];
                 siteblock.address = address;
-                siteblock.include = include;
                 siteblocks.push(siteblock);
-                _this.siteblocks[address] = siteblock;
+                if (Page.site_list.sites_byaddress[address] && !Page.settings.siteblocks_ignore[address]) {
+                  siteblock.site = Page.site_list.sites_byaddress[address];
+                  _this.siteblocks_serving.push(siteblock);
+                }
               }
             }
             include.siteblocks = siteblocks;
@@ -3177,20 +3106,6 @@
           _this.includes.sort(function(a, b) {
             return b.date_added - a.date_added;
           });
-          ref2 = Page.site_list.sites;
-          for (j = 0, len1 = ref2.length; j < len1; j++) {
-            site = ref2[j];
-            address = site.row.address;
-            if (_this.siteblocks[address] && !Page.settings.siteblocks_ignore[address]) {
-              _this.siteblocks[address].site = site;
-              _this.siteblocks_serving.push(_this.siteblocks[address]);
-            }
-            address_hash = "0x" + site.row.address_hash;
-            if (_this.siteblocks[address_hash] && !Page.settings.siteblocks_ignore[address_hash]) {
-              _this.siteblocks[address_hash].site = site;
-              _this.siteblocks_serving.push(_this.siteblocks[address_hash]);
-            }
-          }
           _this.updated = true;
           return Page.projector.scheduleRender();
         };
@@ -3221,7 +3136,7 @@
 
     MuteList.prototype.handleIncludeRemoveClick = function(e) {
       var include;
-      include = e.currentTarget.include;
+      include = e.target.include;
       if (include.removed) {
         Page.cmd("filterIncludeAdd", [include.inner_path, include.description, include.address]);
       } else {
@@ -3325,7 +3240,7 @@
                 href: "#Remove+include",
                 onclick: _this.handleIncludeRemoveClick,
                 include: include
-              }, [h("span.closer", "×"), "deactivate this blocklist"]), include.mutes.length ? _this.renderMutes(include.mutes, "includes") : void 0, include.siteblocks.length ? _this.renderSiteblocks(include.siteblocks) : void 0
+              }, "×"), include.mutes.length ? _this.renderMutes(include.mutes, "includes") : void 0, include.siteblocks.length ? _this.renderSiteblocks(include.siteblocks) : void 0
             ]);
           };
         })(this))
@@ -3580,7 +3495,7 @@
     };
 
     Site.prototype.handleDeleteClick = function() {
-      if (this.row.settings.own || this.row.privatekey) {
+      if (this.row.settings.own) {
         Page.cmd("wrapperConfirm", ["You can delete your site using the site's sidebar.", ["Open site"]], (function(_this) {
           return function(confirmed) {
             if (confirmed) {
@@ -3733,30 +3648,8 @@
     };
 
     Site.prototype.getHref = function(row) {
-      var ext, has_plugin, href, ref, ref1, ref2, ref3, supported_plugins;
-      if ((ref = this.row.content) != null ? ref.domain : void 0) {
-        ext = (ref1 = this.row.content) != null ? ref1.domain.split(".").pop() : void 0;
-        supported_plugins = {
-          bit: ["Zeroname", "Dnschain", "Zeroname-local"],
-          yo: ["NameYo"],
-          yu: ["NameYo"],
-          of: ["NameYo"],
-          inf: ["NameYo"],
-          zn: ["NameYo"],
-          list: ["NameYo"]
-        }[ext] || [];
-        has_plugin = (((ref2 = Page.server_info) != null ? ref2.plugins : void 0) != null) && supported_plugins.some(function(plugin) {
-          var ref3;
-          return indexOf.call((ref3 = Page.server_info) != null ? ref3.plugins : void 0, plugin) >= 0;
-        });
-      } else {
-        has_plugin = false;
-      }
-      if (has_plugin && ((ref3 = this.row.content) != null ? ref3.domain : void 0)) {
-        href = Text.getSiteUrl(this.row.content.domain);
-      } else {
-        href = Text.getSiteUrl(this.row.address);
-      }
+      var href;
+      href = Text.getSiteUrl(this.row.address);
       if (row != null ? row.inner_path : void 0) {
         return href + row.inner_path;
       } else {
@@ -3832,11 +3725,8 @@
     };
 
     Site.prototype.renderOptionalStats = function() {
-      var base, ratio, ratio_hue, row;
+      var ratio, ratio_hue, row;
       row = this.row;
-      if ((base = row.settings).bytes_sent == null) {
-        base.bytes_sent = 0;
-      }
       ratio = (row.settings.bytes_sent / row.settings.bytes_recv).toFixed(1);
       if (ratio >= 100) {
         ratio = "\u221E";
@@ -3905,8 +3795,6 @@
     function SiteList() {
       this.onSiteInfo = bind(this.onSiteInfo, this);
       this.render = bind(this.render, this);
-      this.renderSection = bind(this.renderSection, this);
-      this.handleSectionClick = bind(this.handleSectionClick, this);
       this.handleSiteListMoreClick = bind(this.handleSiteListMoreClick, this);
       this.handleFilterClear = bind(this.handleFilterClear, this);
       this.handleFilterKeyup = bind(this.handleFilterKeyup, this);
@@ -3926,7 +3814,6 @@
       this.filtering = "";
       setInterval(this.reorderTimer, 10000);
       this.limit = 100;
-      this.should_animate = false;
       Page.on_settings.then((function(_this) {
         return function() {
           return Page.on_server_info.then(function() {
@@ -4006,19 +3893,17 @@
       var demo_site_rows, i, len, results, site_row;
       demo_site_rows = [
         {
+          address: "1MeFqFfFFGQfa1J3gJyYYUvb5Lksczq7nH",
+          demo: true,
+          content: {
+            title: "ZeroMe",
+          },
+          settings: {}
+        }, {
           address: "1TaLkFrMwvbNsooF4ioKAY9EuxTBTjipT",
           demo: true,
           content: {
             title: "ZeroTalk",
-            domain: "Talk.ZeroNetwork.bit"
-          },
-          settings: {}
-        }, {
-          address: "1BLogC9LN4oPDcruNz3qo1ysa133E9AGg8",
-          demo: true,
-          content: {
-            title: "ZeroBlog",
-            domain: "Blog.ZeroNetwork.bit"
           },
           settings: {}
         }, {
@@ -4026,44 +3911,31 @@
           demo: true,
           content: {
             title: "ZeroMail",
-            domain: "Mail.ZeroNetwork.bit"
-          },
-          settings: {}
-        }, {
-          address: "1uPLoaDwKzP6MCGoVzw48r4pxawRBdmQc",
-          demo: true,
-          content: {
-            title: "ZeroUp"
-          },
-          settings: {}
-        }, {
-          address: "1Gif7PqWTzVWDQ42Mo7np3zXmGAo3DXc7h",
-          demo: true,
-          content: {
-            title: "GIF Time"
           },
           settings: {}
         }, {
           address: "1SiTEs2D3rCBxeMoLHXei2UYqFcxctdwB",
           demo: true,
           content: {
-            title: "More @ ZeroSites",
-            domain: "Sites.ZeroNetwork.bit"
+            title: "ZeroSites",
           },
           settings: {}
+        }, {
+	    address: "186THqMWuptrZxq1rxzpguAivK3Bs6z84o",
+	    demo: true,
+	    content: {
+		title: "0list"
+	    },
+	    settings: {}
+	}, {
+	    address: "1xiwbXaTbo9XU32hEpW4NyjZHrugSFdo6",
+	    demo: true,
+	    content: {
+		title: "Search and Index sites"
+	    },
+	    settings: {}
         }
       ];
-      if (Page.server_info.rev >= 1400) {
-        demo_site_rows.push({
-          address: "1MeFqFfFFGQfa1J3gJyYYUvb5Lksczq7nH",
-          demo: true,
-          content: {
-            title: "ZeroMe",
-            domain: "Me.ZeroNetwork.bit"
-          },
-          settings: {}
-        });
-      }
       this.inactive_demo_sites = [];
       results = [];
       for (i = 0, len = demo_site_rows.length; i < len; i++) {
@@ -4097,7 +3969,13 @@
       back = [];
       for (merged_type in merged_db) {
         merged_sites = merged_db[merged_type];
-        back.push(this.renderSection(".merged.merged-" + merged_type, "Merged: " + merged_type, merged_sites));
+        back.push([
+          h("h2.more", {
+            key: "Merged: " + merged_type
+          }, "Merged: " + merged_type), h("div.SiteList.merged.merged-" + merged_type, merged_sites.map(function(item) {
+            return item.render();
+          }))
+        ]);
       }
       return back;
     };
@@ -4124,61 +4002,6 @@
       this.limit += 1000;
       Page.projector.scheduleRender();
       return false;
-    };
-
-    SiteList.prototype.handleSectionClick = function(e) {
-      var class_name;
-      this.should_animate = true;
-      class_name = e.currentTarget.getAttribute("class_name");
-      if (Page.settings.sites_section_hide[class_name]) {
-        delete Page.settings.sites_section_hide[class_name];
-      } else {
-        Page.settings.sites_section_hide[class_name] = true;
-      }
-      Page.saveSettings();
-      Page.projector.scheduleRender();
-      return false;
-    };
-
-    SiteList.prototype.renderSection = function(class_name, title, items, limit) {
-      var classes, items_limited;
-      if (limit == null) {
-        limit = null;
-      }
-      if (items.length === 0) {
-        return null;
-      }
-      classes = {
-        "hidden": Page.settings.sites_section_hide[class_name]
-      };
-      if (limit && items.length > limit) {
-        items_limited = items.slice(0, +limit + 1 || 9e9);
-      } else {
-        items_limited = items;
-      }
-      return [
-        h("h2.SiteSection.section" + class_name, {
-          classes: classes
-        }, h("a.section-title", {
-          href: "#Show",
-          onclick: this.handleSectionClick,
-          class_name: class_name
-        }, [title, h("span.hide-title", "[Show " + items.length + " sites]")])), !classes.hidden ? h("div.SiteList" + class_name, {
-          classes: classes,
-          exitAnimation: Animation.slideUp,
-          enterAnimation: Animation.slideDown,
-          animate_disable: !this.should_animate
-        }, [
-          [
-            items_limited.map(function(item) {
-              return item.render();
-            })
-          ], limit && items.length > limit ? h("a.site-list-more", {
-            href: "#Show+more+connected+sites",
-            onclick: this.handleSiteListMoreClick
-          }, "Show more") : void 0
-        ]) : void 0
-      ];
     };
 
     SiteList.prototype.render = function() {
@@ -4237,7 +4060,30 @@
             href: "#clear",
             onclick: this.handleFilterClear
           }, "\u00D7")
-        ] : void 0, this.renderSection(".recent", "Recently downloaded:", this.sites_recent), this.renderSection(".needaction", "Running out of size limit:", this.sites_needaction), this.renderSection(".favorited", "Favorited sites:", this.sites_favorited), this.renderSection(".owned", "Owned sites:", this.sites_owned), this.renderSection(".connecting", "Connecting sites:", this.sites_connecting), this.renderSection(".connected", "Connected sites:", this.sites_connected, this.limit), this.renderMergedSites(), this.inactive_demo_sites !== null && this.inactive_demo_sites.length > 0 ? this.renderSection(".more", "More sites:", this.inactive_demo_sites) : void 0
+        ] : void 0, this.sites_recent.length > 0 ? h("h2.recent", "Recently downloaded:") : void 0, h("div.SiteList.recent", this.sites_recent.map(function(item) {
+          return item.render();
+        })), this.sites_needaction.length > 0 ? h("h2.needaction", "Running out of size limit:") : void 0, h("div.SiteList.needaction", this.sites_needaction.map(function(item) {
+          return item.render();
+        })), this.sites_favorited.length > 0 ? h("h2.favorited", "Favorited sites:") : void 0, h("div.SiteList.favorited", this.sites_favorited.map(function(item) {
+          return item.render();
+        })), this.sites_owned.length > 0 ? h("h2.owned", "Owned sites:") : void 0, h("div.SiteList.owned", this.sites_owned.map(function(item) {
+          return item.render();
+        })), this.sites_connecting.length > 0 ? h("h2.connecting", "Connecting sites:") : void 0, h("div.SiteList.connecting", this.sites_connecting.map(function(item) {
+          return item.render();
+        })), this.sites_connected.length > 0 ? h("h2.connected", "Connected sites:") : void 0, h("div.SiteList.connected", [
+          this.sites_connected.slice(0, +(this.limit - 1) + 1 || 9e9).map(function(item) {
+            return item.render();
+          }), this.sites_connected.length > this.limit ? h("a.site-list-more", {
+            href: "#Show+more+connected+sites",
+            onclick: this.handleSiteListMoreClick
+          }, "Show more") : void 0
+        ]), this.renderMergedSites(), this.inactive_demo_sites !== null && this.inactive_demo_sites.length > 0 ? [
+          h("h2.more", {
+            key: "More"
+          }, "More sites:"), h("div.SiteList.more", this.inactive_demo_sites.map(function(item) {
+            return item.render();
+          }))
+        ] : void 0
       ]);
     };
 
@@ -4731,7 +4577,7 @@
               data: []
             }, {
               type: 'line',
-              label: "Sent",
+              label: 'Sent',
               borderColor: gradient_stroke_bgline_up,
               backgroundColor: "rgba(255,255,255,0.0)",
               pointRadius: 0,
@@ -4746,7 +4592,7 @@
               data: []
             }, {
               type: 'line',
-              label: "Received",
+              label: 'Received',
               borderColor: gradient_stroke_bgline_down,
               backgroundColor: "rgba(255,255,255,0.0)",
               pointRadius: 0,
@@ -5058,7 +4904,7 @@
       ], (function(_this) {
         return function(res) {
           var address, data, i, j, k, len, len1, max_site_bw, max_site_size, ref, row, site, stat;
-          _this.logStart("Parse result", res.length);
+          _this.logStart("Parse result");
           data = {};
           for (j = 0, len = res.length; j < len; j++) {
             row = res[j];
@@ -5262,7 +5108,7 @@
         delay: i * 0.05
       }, h("a.title", {
         href: stat.site.getHref()
-      }, stat.site.row.content.title), " ", h("span.value", " (" + (Text.formatSize(stat[this.order_by]) || "No data yet") + ")"));
+      }, stat.site.row.content.title), " ", h("span.value", " (" + (Text.formatSize(stat[this.order_by]) || 'No data yet') + ")"));
     };
 
     ChartRadar.prototype.render = function() {
@@ -5376,9 +5222,6 @@
         return results;
       }).call(this)).pop();
       line_width = 1400 / this.line_data.length;
-      if (data_last_i == null) {
-        return;
-      }
       ref = this.line_data;
       for (i = j = 0, len = ref.length; j < len; i = ++j) {
         data = ref[i];
@@ -5439,7 +5282,7 @@
       ], (function(_this) {
         return function(res) {
           var data_date_added, data_from, data_to, day_data, day_from, day_name, day_string, day_to, group_step_data, i, j, k, l, len, m, n, ref, row, x;
-          _this.logStart("Parse result", res.length);
+          _this.logStart("Parse result");
           _this.line_data = [];
           for (j = 0, len = res.length; j < len; j++) {
             row = res[j];
@@ -5791,7 +5634,7 @@
       this.chart_connections.title = "Connections";
       this.chart_connections.type_names = ["peer", "peer_onion", "connection", "connection_onion", "connection_in", "connection_ping_avg", "connection_ping_min"];
       this.chart_connections.formatValue = function(type_data) {
-        return "" + type_data.connection + " of " + type_data.peer + " peers";
+        return type_data.connection + " of " + type_data.peer + " peers";
       };
       this.chart_connections.formatDetails = function(type_data) {
         var back;
@@ -5989,7 +5832,7 @@
 
     Animation.prototype.slideDown = function(elem, props) {
       var cstyle, h, margin_bottom, margin_top, padding_bottom, padding_top, transition;
-      if ((elem.offsetTop > 1000 && elem.getBoundingClientRect().top > 1000) || props.animate_disable) {
+      if (elem.offsetTop > 1000) {
         return;
       }
       h = elem.offsetHeight;
@@ -6029,7 +5872,7 @@
     };
 
     Animation.prototype.slideUp = function(elem, remove_func, props) {
-      if (elem.offsetTop > 1000 && elem.getBoundingClientRect().top > 1000) {
+      if (elem.offsetTop > 1000) {
         return remove_func();
       }
       elem.className += " animate-back";
@@ -6760,7 +6603,7 @@
 
     Text.prototype.formatSize = function(size) {
       var size_mb;
-      if (isNaN(parseInt(size))) {
+      if (!parseInt(size)) {
         return "";
       }
       size_mb = size / 1024 / 1024;
@@ -6771,7 +6614,7 @@
       } else if (size / 1024 >= 1000) {
         return size_mb.toFixed(2) + " MB";
       } else {
-        return (parseInt(size) / 1024).toFixed(2) + " KB";
+        return (size / 1024).toFixed(2) + " KB";
       }
     };
 
@@ -7084,7 +6927,7 @@
 
     Head.prototype.renderMenuLanguage = function() {
       var lang, langs, ref;
-      langs = ["da", "de", "en", "es", "fa", "fr", "hu", "it", "jp", "nl", "pl", "pt", "pt-br", "ru", "sk", "tr", "uk", "zh", "zh-tw"];
+      langs = ["da", "de", "en", "es", "fr", "hu", "it", "nl", "pl", "pt", "pt-br", "ru", "sk", "tr", "uk", "zh", "zh-tw"];
       if (Page.server_info.language && (ref = Page.server_info.language, indexOf.call(langs, ref) < 0)) {
         langs.push(Page.server_info.language);
       }
@@ -7144,12 +6987,8 @@
     };
 
     Head.prototype.renderMenuTheme = function() {
-      var ref, theme_id, theme_selected, theme_title, themes;
-      themes = {
-        "system": _("system"),
-        "light": _("light"),
-        "dark": _("dark")
-      };
+      var ref, theme, theme_selected, themes;
+      themes = ["system", "light", "dark"];
       if (Page.server_info.user_settings.use_system_theme) {
         theme_selected = "system";
       } else {
@@ -7159,19 +6998,19 @@
         }
       }
       return h("div.menu-radio.menu-themes", h("div", "Theme: "), (function() {
-        var results;
+        var i, len, results;
         results = [];
-        for (theme_id in themes) {
-          theme_title = themes[theme_id];
+        for (i = 0, len = themes.length; i < len; i++) {
+          theme = themes[i];
           results.push([
             h("a", {
-              href: "#" + theme_id,
+              href: "#" + theme,
               onclick: this.handleThemeClick,
               classes: {
-                selected: theme_selected === theme_id,
+                selected: theme_selected === theme,
                 long: true
               }
-            }, theme_title), " "
+            }, theme), " "
           ]);
         }
         return results;
@@ -7296,15 +7135,6 @@
     };
 
     Head.prototype.handleUpdateZeronetClick = function() {
-      if (Page.server_info.updatesite) {
-        Page.updateZeronet();
-      } else {
-        Page.cmd("wrapperConfirm", ["Update to latest development version?", "Update ZeroNet " + Page.latest_version], (function(_this) {
-          return function() {
-            return Page.updateZeronet();
-          };
-        })(this));
-      }
       return false;
     };
 
@@ -7333,12 +7163,7 @@
       }, ["\u22EE"]), this.menu_settings.render(), h("a.logo", {
         href: "?Home"
       }, [
-        h("img", {
-          src: 'img/logo.svg',
-          width: 40,
-          height: 40,
-          onerror: "this.src='img/logo.png'; this.onerror=null;"
-        }), h("span", ["Hello ZeroNet_"])
+        h("span", ["zeronet-conservancy admin"])
       ]), h("div.modes", [
         h("a.mode.sites", {
           href: "?",
@@ -7558,7 +7383,7 @@
       return this.on_site_info.then((function(_this) {
         return function() {
           return _this.cmd("userGetSettings", [], function(res) {
-            var base1, base2, base3, base4, base5;
+            var base1, base2, base3, base4;
             if (!res || res.error) {
               return _this.loadLocalStorage();
             } else {
@@ -7566,17 +7391,14 @@
               if ((base1 = _this.settings).sites_orderby == null) {
                 base1.sites_orderby = "peers";
               }
-              if ((base2 = _this.settings).sites_section_hide == null) {
-                base2.sites_section_hide = {};
+              if ((base2 = _this.settings).favorite_sites == null) {
+                base2.favorite_sites = {};
               }
-              if ((base3 = _this.settings).favorite_sites == null) {
-                base3.favorite_sites = {};
+              if ((base3 = _this.settings).siteblocks_ignore == null) {
+                base3.siteblocks_ignore = {};
               }
-              if ((base4 = _this.settings).siteblocks_ignore == null) {
-                base4.siteblocks_ignore = {};
-              }
-              if ((base5 = _this.settings).date_feed_visit == null) {
-                base5.date_feed_visit = 1;
+              if ((base4 = _this.settings).date_feed_visit == null) {
+                base4.date_feed_visit = 1;
               }
               _this.feed_list.date_feed_visit = _this.settings.date_feed_visit;
               return _this.on_settings.resolve(_this.settings);
@@ -7653,15 +7475,10 @@
     };
 
     ZeroHello.prototype.reloadServerErrors = function(cb) {
-      return this.on_server_info.then((function(_this) {
-        return function() {
-          if (_this.server_info.multiuser && !_this.server_info.multiuser_admin) {
-            return typeof cb === "function" ? cb(false) : void 0;
-          }
-          return _this.cmd("serverErrors", {}, function(server_errors) {
-            _this.setServerErrors(server_errors);
-            return typeof cb === "function" ? cb(server_errors) : void 0;
-          });
+      return this.cmd("serverErrors", {}, (function(_this) {
+        return function(server_errors) {
+          _this.setServerErrors(server_errors);
+          return typeof cb === "function" ? cb(server_errors) : void 0;
         };
       })(this));
     };
@@ -7738,7 +7555,7 @@
         this.server_errors.push({
           title: [Time.since(date_added), " - ", level],
           descr: message,
-          href: "#ZeroNet:Console:Error"
+          href: null
         });
       }
       return this.projector.scheduleRender();
@@ -7754,12 +7571,7 @@
     };
 
     ZeroHello.prototype.updateZeronet = function() {
-      if (this.server_info.updatesite) {
-        return window.top.location = Text.getSiteUrl(this.server_info.updatesite);
-      } else {
-        Page.cmd("wrapperNotification", ["info", "Updating to latest version...<br>Please restart ZeroNet manually if it does not come back in the next few minutes.", 8000]);
-        return Page.cmd("serverUpdate");
-      }
+      Page.cmd("wrapperNotification", ["info", "please update zeronet-conservancy via git", 8000]);
     };
 
     return ZeroHello;

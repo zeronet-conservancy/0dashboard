@@ -1,34 +1,8 @@
-/*
-Original code is Copyright (c) 2020 ZeroNet project.
-Original code was released under the GPLv2 license by ZeroNet project, December 2016.
-Original code was rereleased under the MIT license by ZeroNet project, March 2020.
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-
 // Version 1.0.0 - Initial release
 // Version 1.1.0 (2017-08-02) - Added cmdp function that returns promise instead of using callback
 // Version 1.2.0 (2017-08-02) - Added Ajax monkey patch to emulate XMLHttpRequest over ZeroFrame API
 // Version 1.3.0 (2018-12-05) - Added monkey patch for fetch API
 // Version 1.3.1 (2019-09-02) - Fix memory leak while handling responses
-// Version 1.4.0 (2019-12-11) - Awaitable monkeyPatchAjax function
 
 const CMD_INNER_READY = 'innerReady'
 const CMD_RESPONSE = 'response'
@@ -135,9 +109,10 @@ class ZeroFrame {
         this.log('Websocket close')
     }
 
-    async monkeyPatchAjax() {
+    monkeyPatchAjax() {
         var page = this
         XMLHttpRequest.prototype.realOpen = XMLHttpRequest.prototype.open
+        this.cmd("wrapperGetAjaxKey", [], (res) => { this.ajax_key = res })
         var newOpen = function (method, url, async) {
             url += "?ajax_key=" + page.ajax_key
             return this.realOpen(method, url, async)
@@ -150,7 +125,5 @@ class ZeroFrame {
             return window.realFetch(url)
         }
         window.fetch = newFetch
-
-        this.ajax_key = await page.cmdp("wrapperGetAjaxKey", [])
     }
 }

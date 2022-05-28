@@ -3,7 +3,6 @@
 	"Checking": "Checando",
 	"Opened": "Aberta",
 	"Closed": "Fechada",
-	"Unsupported": "Sem suporte",
 	"Always": "Sempre",
 	"Available": "Disponível",
 	"_(Disabled)": "Desativada",
@@ -135,7 +134,7 @@
 	"Optional": "Opcional",
 	"Help distribute all new files": "Ajudar a distribuir todos os novos arquivos",
 	"Upload/Download ratio": "Taxa de Download/Upload",
-
+	
 	"Bigfiles": "Arquivos big",
 	"Site": "Site",
 	"Optional file": "Arquivo opcional",
@@ -146,7 +145,7 @@
 	"Downloaded": "Baixado",
 	"Finished": "Terminado",
 	"Pinned": "Fixado",
-
+	
 	"Sunday": "Domingo",
 	"Monday": "Segunda",
 	"Tuesday": "Terça",
@@ -163,7 +162,7 @@
 	" requests": " solicitações",
 	"Transferred data (last 7 days)": "Dados transferidos (últimos 7 dias)",
 	"Site size": "Tamanho do site",
-	"Connections": "Conexões",
+	"Connections": "Conexões",	
 	" peers": " peers",
 	"Onion: ": "Onion: ",
 	" peers (": " peers (",
@@ -183,19 +182,5 @@
 	" hours ago": "  horas atrás",
 	" days ago": " dias atrás",
 	"on ": "a",
-	"Just now": "Agora mesmo",
-
-	"Theme: ": "Tema: ",
-	"_(light)": "claro",
-	"_(dark)": "escuro",
-	"_(system)": "sistema",
-	"(No data yet)": "(Ainda não existem dados)",
-	"Send": "Enviado",
-	"Received": "Recebido",
-
-	"Connected sites:": "Sites conectados:",
-	"All": "Tudo",
-	"from \" + this.res.sites + \" sites in ": "De \" + this.res.sites + \" em ",
-	"Filter: File name": "Filtrar: Nome do arquivo",
-	"Runtime files": "Arquivos de tempo de execução"
+	"Just now": "Agora mesmo"
 }
