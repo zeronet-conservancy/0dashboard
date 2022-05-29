@@ -2137,7 +2137,7 @@
 
     Dashboard.prototype.handleDonateClick = function() {
       this.menu_donate.items = [];
-      this.menu_donate.items.push(["Help to keep this project alive", Text.getSiteUrl("1DocsYf2tZVVMEMJFHiDsppmFicZCWkVv1") + "help_zeronet/donate/"]);
+      this.menu_donate.items.push(["Join, participate and support development", "https://riza-committee.github.io/community/"]);
       this.menu_donate.toggle();
       return false;
     };
@@ -7147,11 +7147,7 @@
     };
 
     Head.prototype.handleModeClick = function(e) {
-      if (Page.server_info.rev < 1700) {
-        Page.cmd("wrapperNotification", ["info", "This feature requires ZeroNet version 0.5.0"]);
-      } else {
-        Page.handleLinkClick(e);
-      }
+      Page.handleLinkClick(e);
       return false;
     };
 
@@ -7163,7 +7159,7 @@
       }, ["\u22EE"]), this.menu_settings.render(), h("a.logo", {
         href: "?Home"
       }, [
-        h("span", ["zeronet-conservancy admin"])
+        h("span", ["zeronet-conservancy dashboard"])
       ]), h("div.modes", [
         h("a.mode.sites", {
           href: "?",
