@@ -1,5 +1,5 @@
 {
- "address": "1ET7jAeK8Q2HqsSMTnj17CnnAdN47b4Pu1",
+ "address": "126NXcevn1AUehWFZLTBw7FrX1crEizQdr",
  "background-color": "#F2F4F6",
  "background-color-dark": "#383F46",
  "description": "admin & read notifications",
@@ -13,4 +13,5 @@
  "title": "zeronet-conservancy dashboard",
  "translate": ["js/all.js"],
  "viewport": "width=device-width, initial-scale=0.8",
+ "donate-btc": "1Kjuw3reZvxRVNs27Gen7jPJYCn6LY7Fg6"
 }
