@@ -1,10 +1,9 @@
 {
- "address": "126NXcevn1AUehWFZLTBw7FrX1crEizQdr",
+ "address": "191CazMVNaAcT9Y1zhkxd9ixMBPs59g2um",
  "background-color": "#F2F4F6",
  "background-color-dark": "#383F46",
  "description": "admin & read notifications",
- "files": {}
- },
+ "files": {},
  "ignore": "(((js|css)/(?!all.(js|css)))|(.*~))",
  "inner_path": "content.json",
  "modified": 1649747253,
