@@ -7087,7 +7087,8 @@
       if (!Page.server_info.multiuser || Page.server_info.multiuser_admin) {
         this.menu_settings.items.push(["Show data directory", this.handleBackupClick]);
       }
-      this.menu_settings.items.push(["Version " + Page.server_info.version + " (rev" + Page.server_info.rev + "): " + (this.formatUpdateInfo()), this.handleUpdateZeronetClick]);
+      // this.menu_settings.items.push(["Version " + Page.server_info.version + " (rev" + Page.server_info.rev + "): " + (this.formatUpdateInfo()), this.handleUpdateZeronetClick]);
+      this.menu_settings.items.push(["Version " + Page.server_info.version + " (rev" + Page.server_info.rev + ")"]);
       if (!Page.server_info.multiuser || Page.server_info.multiuser_admin) {
         this.menu_settings.items.push(["Shut down ZeroNet", this.handleShutdownZeronetClick]);
       }
