@@ -3907,6 +3907,20 @@
           },
           settings: {}
         }, {
+          address: "1EfLnw7GDXbZfJmGNoXGQ4XkuHGWkRZTMq",
+          demo: true,
+          content: {
+            title: "ZeroTalk Tech",
+          },
+          settings: {}
+        }, {
+          address: "13gLfTixjjktySEGHBMnmrQu4qMJpoRuXw",
+          demo: true,
+          content: {
+            title: "The All-Night Bookstore and Cafe",
+          },
+          settings: {}
+        }, {
           address: "1MaiL5gfBM1cyb4a8e3iiL8L5gXmoAJu27",
           demo: true,
           content: {
@@ -3932,6 +3946,13 @@
 	    demo: true,
 	    content: {
 		title: "Search and Index sites"
+	    },
+	    settings: {}
+        }, {
+	    address: "15CEFKBRHFfAP9rmL6hhLmHoXrrgmw4B5o",
+	    demo: true,
+	    content: {
+		title: "Syncronite"
 	    },
 	    settings: {}
         }
@@ -7160,7 +7181,7 @@
       }, ["\u22EE"]), this.menu_settings.render(), h("a.logo", {
         href: "?Home"
       }, [
-        h("span", ["zeronet-conservancy dashboard"])
+        h("span", ["0net-conservancy dashboard"])
       ]), h("div.modes", [
         h("a.mode.sites", {
           href: "?",
